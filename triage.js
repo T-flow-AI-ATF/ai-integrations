@@ -12,7 +12,7 @@ async function callGroq(symptomsText) {
   const apiKey = process.env.GROQ_API_KEY || 'YOUR_GROQ_API_KEY'; // Replace or set env var
   const url = 'https://api.groq.com/openai/v1/chat/completions';
   const payload = {
-    model: 'groq/deepseek-r1-distill-llama-70b',
+    model: 'deepseek-r1-distill-llama-70b',
     messages: [
       {
         role: 'system',
