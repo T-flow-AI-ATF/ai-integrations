@@ -11,7 +11,7 @@ An AI-powered medical triage system that classifies patient symptoms into urgenc
 
 ## Setup
 
-1. Clone the repository
+1. Clone the repository( dev branch and make pr for changes)
 2. Install dependencies:
    ```bash
    npm install
