@@ -1,34 +1,42 @@
 # T-Flow AI Medical Triage System
 
-A comprehensive AI-powered medical triage system that classifies patient symptoms into urgency levels using Groq's deepseek-r1-distill-llama-70b model with intelligent fallback mechanisms and Firestore integration.
+A comprehensive AI-powered medical triage system that classifies patient symptoms into urgency levels using Groq's **llama-3.3-70b-versatile** model with intelligent fallback mechanisms and Supabase integration.
+
+**Language:** Python 3.8+
 
 ## 🏥 Features
 
 ### **AI-Powered Classification**
-- **Advanced Medical AI**: Uses Groq's deepseek-r1-distill-llama-70b model
+
+- **Advanced Medical AI**: Uses Groq's **llama-3.3-70b-versatile** model (latest version)
 - **Hospital-Grade Prompt**: 10/10 rated medical triage prompt with comprehensive safety protocols
 - **Four Triage Levels**: Critical, Urgent, Moderate, Low with specific timeframes
-- **Single-Word Output**: Clean API integration with consistent responses
+- **Clean Responses**: Direct single-word classifications without reasoning artifacts
 
 ### **Comprehensive Medical Coverage**
+
 - **Pediatric Guidelines**: Age-specific criteria for patients under 18
 - **Geriatric Considerations**: Specialized protocols for patients over 65
 - **Mental Health Integration**: Suicide risk assessment and crisis protocols
 - **Contextual Analysis**: Pain location, duration, and associated symptoms
 
 ### **Safety & Reliability**
+
 - **Rule-Based Fallback**: Ensures system reliability when AI is unavailable
 - **Critical Safety Rules**: Mandatory escalation for high-risk symptoms
 - **Quality Assurance**: Clinical pattern recognition and edge case handling
 - **Bias Prevention**: Cultural sensitivity and demographic neutrality
 
 ### **Data Management**
-- **Firestore Integration**: Automatic storage of all triage records
+
+- **Supabase Integration**: Automatic storage of all triage records
+- **PostgreSQL Database**: Robust relational database with JSONB support
 - **Vital Signs Monitoring**: Automated flagging of abnormal vital signs
 - **Historical Records**: Query recent triage and vitals data
 - **Error Handling**: Graceful degradation with comprehensive error management
 
 ### **Professional Standards**
+
 - **Medical Liability Protection**: Clear AI limitations and disclaimers
 - **Ethical Guidelines**: Patient safety prioritization and professional boundaries
 - **Emergency Medicine Alignment**: Follows standard hospital triage protocols
@@ -37,8 +45,9 @@ A comprehensive AI-powered medical triage system that classifies patient symptom
 ## 🚀 Setup
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- Firebase project with Firestore enabled
+
+- Python 3.8 or higher
+- Supabase project with database enabled
 - Groq API account and key
 
 ### Installation
@@ -50,108 +59,115 @@ A comprehensive AI-powered medical triage system that classifies patient symptom
    git checkout dev
    ```
 
-2. **Install dependencies**
+2. **Install Python dependencies**
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
 
 3. **Configure environment variables**
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and add your Groq API key:
+   Edit `.env` and add your credentials:
    ```env
    GROQ_API_KEY=your_actual_groq_api_key_here
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
 
-4. **Configure Firebase**
-   - Update `firebase.js` with your Firebase configuration
-   - Ensure Firestore is enabled in your Firebase project
+4. **Configure Supabase**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Run the SQL commands from `supabase_setup.sql` in the SQL Editor
+   - Copy your project URL and anon key to `.env`
 
 ## 📋 Usage
 
 ### Quick Test
 ```bash
-npm test
+python test.py
 ```
 
 ### API Integration
 
 #### Basic Triage Classification
-```javascript
-const { triagePatient, flagVitals } = require('./triage');
+```python
+import asyncio
+from triage import triage_patient, flag_vitals
 
-// AI-powered triage with patient info
-const result = await triagePatient(
-  'Patient experiencing severe chest pain with sweating and nausea',
-  { patientId: '12345', age: 45, gender: 'M' },
-  true // Use AI
-);
+async def example():
+    # AI-powered triage with patient info
+    result = await triage_patient(
+        'Patient experiencing severe chest pain with sweating and nausea',
+        {'patient_id': '12345', 'age': 45, 'gender': 'M'},
+        True  # Use AI
+    )
+    
+    print(result)
+    # Output: {'triage_level': 'Critical', 'record_id': 'uuid', 'timestamp': '2025-08-02T...', 'data': {...}}
 
-console.log(result);
-// Output: { triageLevel: 'Critical', recordId: 'abc123', timestamp: Date, data: {...} }
+asyncio.run(example())
 ```
 
 #### Vital Signs Analysis
-```javascript
-// Analyze vital signs
-const vitalsResult = await flagVitals(
-  { pulse: 110, systolicBP: 180, diastolicBP: 95 },
-  { patientId: '12345' }
-);
+```python
+# Analyze vital signs
+vitals_result = await flag_vitals(
+    {'pulse': 110, 'systolicBP': 180, 'diastolicBP': 95},
+    {'patient_id': '12345'}
+)
 
-console.log(vitalsResult.flags);
-// Output: { pulseFlag: true, systolicFlag: true, diastolicFlag: false, anyFlag: true }
+print(vitals_result['flags'])
+# Output: {'pulse_flag': True, 'systolic_flag': True, 'diastolic_flag': False, 'any_flag': True}
 ```
 
 #### Retrieve Historical Data
-```javascript
-const { getRecentTriageRecords, getRecentVitalsRecords } = require('./triage');
+```python
+from triage import get_recent_triage_records, get_recent_vitals_records
 
-// Get last 10 triage records
-const recentTriage = await getRecentTriageRecords(10);
+# Get last 10 triage records
+recent_triage = get_recent_triage_records(10)
 
-// Get last 5 vitals records
-const recentVitals = await getRecentVitalsRecords(5);
+# Get last 5 vitals records
+recent_vitals = get_recent_vitals_records(5)
 ```
 
 ### Advanced Usage
 
 #### Rule-Based Fallback
-```javascript
-// Force rule-based classification (bypass AI)
-const fallbackResult = await triagePatient(
-  'Patient has mild headache and feels tired',
-  { patientId: '67890' },
-  false // Don't use AI
-);
+```python
+# Force rule-based classification (bypass AI)
+fallback_result = await triage_patient(
+    'Patient has mild headache and feels tired',
+    {'patient_id': '67890'},
+    False  # Don't use AI
+)
 ```
 
 #### Error Handling
-```javascript
-try {
-  const result = await triagePatient(symptoms, patientInfo);
-  if (result.error) {
-    console.warn('Database storage failed:', result.error);
-    // AI classification still succeeded
-    console.log('Triage Level:', result.triageLevel);
-  }
-} catch (error) {
-  console.error('Triage failed:', error);
-  // Handle AI and fallback failure
-}
+```python
+try:
+    result = await triage_patient(symptoms, patient_info)
+    if 'error' in result:
+        print(f"Database storage failed: {result['error']}")
+        # AI classification still succeeded
+        print(f"Triage Level: {result['triage_level']}")
+except Exception as error:
+    print(f"Triage failed: {error}")
+    # Handle AI and fallback failure
 ```
 
 ## 🔧 System Architecture
 
 ### Triage Classification Flow
+
 1. **Input Validation**: Symptom text processing
-2. **AI Classification**: Groq API call with hospital-grade prompt
+2. **AI Classification**: Groq API call with llama-3.3-70b-versatile model
 3. **Fallback Logic**: Rule-based classification if AI fails
-4. **Data Storage**: Firestore record creation
+4. **Data Storage**: Supabase PostgreSQL record creation
 5. **Response Formatting**: Consistent output structure
 
 ### Safety Protocols
+
 - **Critical Safety Rules**: Automatic escalation for high-risk symptoms
 - **Age-Specific Guidelines**: Pediatric and geriatric modifications
 - **Mental Health Screening**: Suicide and violence risk assessment
@@ -160,18 +176,21 @@ try {
 ## 🛡️ Security & Compliance
 
 ### Data Protection
+
 - Environment variables for sensitive credentials
-- Firebase security rules implementation
+- Supabase Row Level Security (RLS) implementation
 - Patient data anonymization support
 - HIPAA-conscious design patterns
 
 ### API Security
+
 - Rate limiting considerations
 - Input sanitization
 - Error message sanitization
 - Audit trail maintenance
 
 ### Best Practices
+
 - Never commit `.env` files
 - Rotate API keys regularly
 - Monitor usage and costs
@@ -179,45 +198,49 @@ try {
 
 ## 📊 Database Schema
 
-### Triage Records (`triage` collection)
-```javascript
-{
-  symptoms: "Patient symptom description",
-  triageLevel: "Critical|Urgent|Moderate|Low",
-  patientInfo: { patientId, age, gender, ... },
-  timestamp: Firestore.Timestamp,
-  useAI: boolean,
-  recordId: "document_id"
-}
+### Triage Records (`triage` table)
+
+```sql
+CREATE TABLE triage (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    symptoms TEXT NOT NULL,
+    triage_level VARCHAR(20) CHECK (triage_level IN ('Critical', 'Urgent', 'Moderate', 'Low')),
+    patient_info JSONB,
+    use_ai BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 ```
 
-### Vitals Records (`vitals` collection)
-```javascript
-{
-  vitals: { pulse, systolicBP, diastolicBP },
-  flags: { pulseFlag, systolicFlag, diastolicFlag, anyFlag },
-  patientInfo: { patientId, age, gender, ... },
-  timestamp: Firestore.Timestamp,
-  recordId: "document_id"
-}
+### Vitals Records (`vitals` table)
+
+```sql
+CREATE TABLE vitals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    vitals JSONB NOT NULL,
+    flags JSONB NOT NULL,
+    patient_info JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 ```
 
 ## 🧪 Testing
 
 ### Test Coverage
-- AI triage classification accuracy
+
+- AI triage classification accuracy with llama-3.3-70b-versatile
 - Rule-based fallback functionality
 - Vital signs flagging algorithms
-- Database integration
+- Supabase database integration
 - Error handling scenarios
 
 ### Sample Test Cases
+
 ```bash
 # Run comprehensive test suite
-npm test
+python test.py
 
 # Individual component testing
-node -e "require('./triage').triagePatient('chest pain').then(console.log)"
+python -c "import asyncio; from triage import triage_patient; asyncio.run(triage_patient('chest pain'))"
 ```
 
 ## 📖 Medical Disclaimer
@@ -240,10 +263,10 @@ node -e "require('./triage').triagePatient('chest pain').then(console.log)"
 4. Submit pull request to `dev` branch
 5. Ensure compliance with healthcare standards
 
-
 ## 🆘 Support
 
 For medical AI implementation questions or technical support:
+
 - Create GitHub issues for bugs
 - Contact T-Flow AI team for deployment guidance
 - Review medical validation requirements for your jurisdiction
