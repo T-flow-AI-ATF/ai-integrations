@@ -36,11 +36,11 @@ groq_client = Groq(api_key=groq_api_key)
 
 async def call_groq(symptoms_text: str) -> str:
     """
-    Helper to call Groq's deepseek-r1-distill-llama-70b model for triage classification.
-    
+    Calls Groq's Llama-3-70B model for triage classification.
+
     Args:
         symptoms_text (str): The patient's symptom description.
-        
+
     Returns:
         str: The model's response as plain text.
     """
