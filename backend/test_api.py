@@ -4,13 +4,8 @@ Test suite for T-Flow AI Medical Triage API
 
 import pytest
 import asyncio
-import sys
-import os
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
-
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
 
