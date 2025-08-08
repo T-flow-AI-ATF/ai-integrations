@@ -9,13 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict, List
-import sys
 import os
 from datetime import datetime
 
-# Add parent directory to path to import triage module
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from triage import triage_patient, flag_vitals, get_recent_triage_records, get_recent_vitals_records
+# Import triage functions from local module
+from triage_core import triage_patient, flag_vitals, get_recent_triage_records, get_recent_vitals_records
 
 # Initialize FastAPI app
 app = FastAPI(
