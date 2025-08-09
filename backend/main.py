@@ -39,9 +39,21 @@ app.add_middleware(
 )
 
 # Request/Response Models
+class VitalsData(BaseModel):
+    pulse: Optional[int] = Field(None, ge=30, le=250, description="Pulse rate (BPM)")
+    systolicBP: Optional[int] = Field(None, ge=60, le=300, description="Systolic blood pressure (mmHg)")
+    diastolicBP: Optional[int] = Field(None, ge=30, le=200, description="Diastolic blood pressure (mmHg)")
+    
+    @validator('diastolicBP')
+    def validate_blood_pressure(cls, v, values):
+        if v and 'systolicBP' in values and values['systolicBP'] and v >= values['systolicBP']:
+            raise ValueError("Diastolic BP must be lower than systolic BP")
+        return v
+
 class TriageRequest(BaseModel):
     symptoms: str = Field(..., min_length=5, max_length=2000, description="Patient symptom description")
     patient_info: Optional[Dict] = Field(default_factory=dict, description="Patient information (age, gender, etc.)")
+    vitals: Optional[VitalsData] = Field(None, description="Patient vital signs (optional)")
     use_ai: bool = Field(default=True, description="Whether to use AI or rule-based triage")
     
     @validator('symptoms')
@@ -59,6 +71,8 @@ class TriageResponse(BaseModel):
     record_id: Optional[str]
     timestamp: str
     confidence: Optional[str] = None
+    vitals_flags: Optional[Dict[str, bool]] = None
+    vitals_record_id: Optional[str] = None
     error: Optional[str] = None
 
 class VitalsRequest(BaseModel):
@@ -110,24 +124,54 @@ async def health_check():
 @app.post("/api/triage", response_model=TriageResponse)
 async def create_triage(request: TriageRequest):
     """
-    AI-powered medical triage endpoint
+    AI-powered medical triage endpoint with integrated vitals analysis
     
     Analyzes patient symptoms using Groq's Llama 3.3 70B model
-    with intelligent fallback to rule-based triage.
+    with intelligent fallback to rule-based triage. Also processes
+    vital signs if provided and includes flagging in the response.
     """
     try:
+        # Main triage analysis
         result = await triage_patient(
             symptoms_text=request.symptoms,
             patient_info=request.patient_info,
             use_ai=request.use_ai
         )
         
-        return TriageResponse(
-            triage_level=result['triage_level'],
-            record_id=result.get('record_id'),
-            timestamp=result['timestamp'],
-            error=result.get('error')
-        )
+        # Initialize response with triage results
+        response_data = {
+            "triage_level": result['triage_level'],
+            "record_id": result.get('record_id'),
+            "timestamp": result['timestamp'],
+            "error": result.get('error')
+        }
+        
+        # Process vitals if provided
+        if request.vitals and any([
+            request.vitals.pulse, 
+            request.vitals.systolicBP, 
+            request.vitals.diastolicBP
+        ]):
+            # Prepare vitals data for analysis
+            vitals_data = {}
+            if request.vitals.pulse is not None:
+                vitals_data['pulse'] = request.vitals.pulse
+            if request.vitals.systolicBP is not None:
+                vitals_data['systolicBP'] = request.vitals.systolicBP
+            if request.vitals.diastolicBP is not None:
+                vitals_data['diastolicBP'] = request.vitals.diastolicBP
+            
+            # Analyze vitals
+            vitals_result = await flag_vitals(
+                vitals=vitals_data,
+                patient_info=request.patient_info
+            )
+            
+            # Add vitals results to response
+            response_data["vitals_flags"] = vitals_result['flags']
+            response_data["vitals_record_id"] = vitals_result.get('record_id')
+        
+        return TriageResponse(**response_data)
         
     except Exception as e:
         # Log the error (in production, use proper logging)
