@@ -13,7 +13,7 @@ import os
 from datetime import datetime
 
 # Import triage functions from local module
-from triage_core import triage_patient, flag_vitals, get_recent_triage_records, get_recent_vitals_records
+from triage_core import triage_patient, flag_vitals, get_recent_triage_records, get_recent_vitals_records, get_recent_combined_assessments
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -218,10 +218,11 @@ async def check_vitals(request: VitalsRequest):
 @app.get("/api/triage/recent")
 async def get_recent_triage(limit: int = 10):
     """
-    Get recent triage records
+    Get recent triage assessments with combined vitals data
     
-    Retrieves the most recent triage assessments from the database
-    for monitoring and analysis purposes.
+    Retrieves the most recent triage assessments with associated vitals 
+    data included when available, providing a unified view of patient assessments.
+    This eliminates the need for separate triage and vitals queries.
     """
     try:
         if limit < 1 or limit > 100:
@@ -230,16 +231,56 @@ async def get_recent_triage(limit: int = 10):
                 detail="Limit must be between 1 and 100"
             )
             
-        records = get_recent_triage_records(limit)
+        records = get_recent_combined_assessments(limit)
         
         return {
             "records": records,
             "count": len(records),
+            "has_vitals_data": any(record.get('vitals_data') for record in records),
             "timestamp": datetime.now().isoformat()
         }
         
     except HTTPException:
         raise
+    except Exception as e:
+        print(f"Error fetching recent triage: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve triage records: {str(e)}"
+        )
+
+@app.get("/api/assessments/recent")
+async def get_recent_assessments(limit: int = 10):
+    """
+    Get recent combined assessments (alias for the updated triage/recent endpoint)
+    
+    This is the new preferred endpoint for fetching recent assessments
+    with both triage and vitals data combined.
+    """
+    try:
+        if limit < 1 or limit > 100:
+            raise HTTPException(
+                status_code=400, 
+                detail="Limit must be between 1 and 100"
+            )
+            
+        records = get_recent_combined_assessments(limit)
+        
+        return {
+            "assessments": records,
+            "count": len(records),
+            "has_vitals_data": any(record.get('vitals_data') for record in records),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching recent assessments: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve assessment records: {str(e)}"
+        )
     except Exception as e:
         print(f"Error fetching recent triage: {str(e)}")
         raise HTTPException(
