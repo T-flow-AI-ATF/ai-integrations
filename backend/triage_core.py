@@ -385,3 +385,87 @@ def get_recent_vitals_records(limit_count: int = 10) -> List[Dict]:
     except Exception as error:
         print(f"Error fetching vitals records: {error}")
         return []
+
+
+def get_recent_combined_assessments(limit_count: int = 10) -> List[Dict]:
+    """
+    Get recent triage assessments with associated vitals data combined.
+    
+    This function fetches triage records and includes vitals data when available,
+    providing a unified view of patient assessments.
+    
+    Args:
+        limit_count (int): Number of records to retrieve (default: 10).
+        
+    Returns:
+        List[Dict]: Array of combined assessment records with triage and vitals data.
+    """
+    try:
+        # Get recent triage records
+        triage_data = supabase.table('triage').select('*').order('created_at', desc=True).limit(limit_count).execute()
+        triage_records = triage_data.data
+        
+        # If no triage records, return empty array
+        if not triage_records:
+            return []
+        
+        # Get all vitals records (we'll match them by timestamp proximity)
+        vitals_data = supabase.table('vitals').select('*').order('created_at', desc=True).limit(limit_count * 2).execute()
+        vitals_records = vitals_data.data
+        
+        # Combine triage and vitals data
+        combined_records = []
+        
+        for triage_record in triage_records:
+            combined_record = dict(triage_record)  # Copy triage data
+            combined_record['vitals_data'] = None  # Initialize vitals data
+            
+            # Look for matching vitals record (within 10 seconds of triage timestamp)
+            triage_time = combined_record.get('created_at')
+            if triage_time and vitals_records:
+                from datetime import datetime, timedelta
+                
+                try:
+                    # Parse triage timestamp
+                    if isinstance(triage_time, str):
+                        triage_dt = datetime.fromisoformat(triage_time.replace('Z', '+00:00'))
+                    else:
+                        triage_dt = triage_time
+                    
+                    # Find vitals record within 10 seconds
+                    for vitals_record in vitals_records:
+                        vitals_time = vitals_record.get('created_at')
+                        if vitals_time:
+                            try:
+                                if isinstance(vitals_time, str):
+                                    vitals_dt = datetime.fromisoformat(vitals_time.replace('Z', '+00:00'))
+                                else:
+                                    vitals_dt = vitals_time
+                                
+                                # If within 10 seconds, consider it a match
+                                time_diff = abs((triage_dt - vitals_dt).total_seconds())
+                                if time_diff <= 10:
+                                    combined_record['vitals_data'] = {
+                                        'id': vitals_record.get('id'),
+                                        'pulse': vitals_record.get('pulse'),
+                                        'systolicBP': vitals_record.get('systolic_bp'),
+                                        'diastolicBP': vitals_record.get('diastolic_bp'),
+                                        'pulse_flag': vitals_record.get('pulse_flag'),
+                                        'systolic_flag': vitals_record.get('systolic_flag'),
+                                        'diastolic_flag': vitals_record.get('diastolic_flag'),
+                                        'any_flag': vitals_record.get('any_flag'),
+                                        'created_at': vitals_record.get('created_at')
+                                    }
+                                    break
+                            except Exception:
+                                continue  # Skip invalid timestamps
+                except Exception:
+                    pass  # Skip records with invalid timestamps
+            
+            combined_records.append(combined_record)
+        
+        return combined_records
+        
+    except Exception as error:
+        print(f"Error fetching combined assessment records: {error}")
+        return []
