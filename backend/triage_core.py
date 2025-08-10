@@ -448,8 +448,8 @@ def get_recent_combined_assessments(limit_count: int = 10) -> List[Dict]:
                                     combined_record['vitals_data'] = {
                                         'id': vitals_record.get('id'),
                                         'pulse': vitals_record.get('pulse'),
-                                        'systolicBP': vitals_record.get('systolicBP'),
-                                        'diastolicBP': vitals_record.get('diastolicBP'),
+                                        'systolicBP': vitals_record.get('systolic_bp'),
+                                        'diastolicBP': vitals_record.get('diastolic_bp'),
                                         'pulse_flag': vitals_record.get('pulse_flag'),
                                         'systolic_flag': vitals_record.get('systolic_flag'),
                                         'diastolic_flag': vitals_record.get('diastolic_flag'),
